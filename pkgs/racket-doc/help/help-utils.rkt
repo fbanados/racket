@@ -6,6 +6,7 @@
 ;; documentation system.
 
 (require setup/xref
+         setup/dirs
          scribble/xref
          scribble/manual-struct
          net/uri-codec
@@ -76,8 +77,12 @@
   (send-main-page #:notify report-sending-browser))
 
 (define (go-to-tag xref t)
-  (let-values ([(file anchor) (xref-tag->path+anchor xref t)])
+  (let-values ([(file anchor) (xref-tag->path+anchor xref t #:external-root-url (get-doc-open-url))])
     (report-sending-browser file)
     (when anchor (printf "  anchor: ~a\n" anchor))
-    (unless (send-url/file file #:fragment (and anchor (uri-encode anchor)))
+    (unless (if (get-doc-open-url)
+                (send-url (if anchor
+                              (string-append file "?" (uri-encode anchor))
+                              file))
+                (send-url/file file #:fragment (and anchor (uri-encode anchor))))
       (error 'help "browser launch failed"))))
