@@ -179,6 +179,8 @@
 (test "+nan.0" number->string +nan.0)
 (test "+nan.0" number->string +nan.0)
 
+(test "1589935744527.254" number->string 1589935744527.254)
+
 #reader "maybe-single.rkt"
 (begin
   (test (if has-single-flonum? "+inf.f" "+inf.0") number->string +inf.f)
@@ -2240,6 +2242,14 @@
 (test 1.0 exp 0.0)
 (test 1.0 exp -0.0)
 (test 272.0 round (* 100 (exp 1)))
+
+;; should not be NaN
+(test +inf.0+0.0i exp 10000000.0+0.0i)
+(test +inf.0-0.0i exp 10000000.0-0.0i)
+#reader "maybe-single.rkt"
+(when has-single-flonum?
+  (test +inf.f+0.0f0i exp +100000.0f0+0.0f0i)
+  (test +inf.f-0.0f0i exp +100000.0f0-0.0f0i))
 
 (test 0 log 1)
 (test 0.0 log 1.0)

@@ -6590,5 +6590,35 @@
         (+ x y)))))
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Regression test provided by @formalizm
+
+(parameterize ([compile-context-preservation-enabled #t])
+  (eval
+   '(module raises-should-be-reached-error racket/base
+      (define (return-false) #f)
+      (define foo
+        (let ([bar (return-false)])
+          (if bar
+              (string-append "bar: " bar)
+              (error "bar is false, so this error is reached")))))))
+(err/rt-test/once (dynamic-require ''raises-should-be-reached-error #f)
+                  exn:fail?
+                  #rx"this error is reached")
+
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Regression test related to single-use variables
+;; and `with-continuation-mark`
+
+(test #t
+      procedure?
+      (let ((q #f)
+            (n (λ (x) #t)))
+        (let ([h (with-continuation-mark
+                  (set! q 1)
+                  #f
+                  n)])
+          (lambda (x) (h x)))))
+
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (report-errs)

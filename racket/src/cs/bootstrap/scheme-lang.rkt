@@ -3,6 +3,7 @@
                      racket/match)
          (prefix-in r: racket/include)
          racket/fixnum
+         racket/flonum
          racket/vector
          racket/splicing
          racket/pretty
@@ -98,6 +99,7 @@
          $set-top-level-value!
          $profile-source-data?
          $compile-profile
+         compile-profile
          $optimize-closures
          $profile-block-data?
          run-cp0
@@ -118,7 +120,6 @@
                      [mpair? binding?]
                      [fx+ r6rs:fx+]
                      [fx- r6rs:fx-]
-                     [< $fxu<]
                      [add1 fx1+]
                      [sub1 fx1-]
                      [add1 1+]
@@ -140,6 +141,7 @@
                      [bitwise-and logand]
                      [bitwise-bit-set? fxbit-set?]
                      [integer-length bitwise-length]
+                     [->fl fixnum->flonum]
                      [+ cfl+]
                      [- cfl-]
                      [* cfl*]
@@ -178,6 +180,7 @@
                      [logbit1 fxlogbit1]
                      [logbit0 fxlogbit0]
                      [logtest fxlogtest])
+         $fxu<
          fxsrl
          fxbit-field
          fxpopcount
@@ -266,6 +269,7 @@
          enable-cross-library-optimization
          enable-arithmetic-left-associative
          enable-type-recovery
+         fasl-compressed
          current-expand
          current-generate-id
          internal-defines-as-letrec*
@@ -292,6 +296,7 @@
          (rename-out [s:open-output-file open-output-file])
          $open-bytevector-list-output-port
          open-bytevector-output-port
+         native-transcoder
          port-file-compressed!
          file-buffer-size
          $source-file-descriptor
@@ -803,6 +808,11 @@
 (define (logtest a b)
   (not (eqv? 0 (bitwise-and a b))))
 
+(define ($fxu< a b)
+  (if (< a 0)
+      #f
+      (< a b)))
+
 (define (fxsrl v amt)
   (if (and (v . fx< . 0)
            (amt . fx> . 0))
@@ -893,6 +903,7 @@
   #f)
 
 (define $compile-profile (make-parameter #f))
+(define compile-profile $compile-profile)
 (define $optimize-closures (make-parameter #t))
 (define $profile-block-data? (make-parameter #f))
 (define run-cp0 (make-parameter error))
@@ -1076,6 +1087,7 @@
 (define enable-cross-library-optimization (make-parameter #t))
 (define enable-arithmetic-left-associative (make-parameter #f))
 (define enable-type-recovery (make-parameter #t))
+(define fasl-compressed (make-parameter #f))
 
 (define current-generate-id (make-parameter gensym))
 
@@ -1164,10 +1176,13 @@
             (define bv (get-output-bytes p))
             (values (list bv) (bytes-length bv)))))
 
-(define (open-bytevector-output-port)
+(define (open-bytevector-output-port [transcoder #f])
   (define p (open-output-bytes))
   (values p
           (lambda () (get-output-bytes p))))
+
+(define (native-transcoder)
+  #f)
 
 (define (port-file-compressed! p)
   (void))

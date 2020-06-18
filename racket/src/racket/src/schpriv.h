@@ -209,7 +209,7 @@ Scheme_Object *scheme_dump_gc_stats(int c, Scheme_Object *p[]);
 
 THREAD_LOCAL_DECL(extern struct rktio_t *scheme_rktio);
 THREAD_LOCAL_DECL(extern int scheme_current_place_id);
-THREAD_LOCAL_DECL(extern intptr_t scheme_total_gc_time);
+THREAD_LOCAL_DECL(extern uintptr_t scheme_total_gc_time);
 THREAD_LOCAL_DECL(extern int scheme_cont_capture_count);
 THREAD_LOCAL_DECL(extern int scheme_continuation_application_count);
 THREAD_LOCAL_DECL(extern struct Scheme_Prefix *scheme_prefix_finalize);
@@ -2026,6 +2026,7 @@ void scheme_about_to_move_C_stack(void);
 
 Scheme_Object *scheme_jump_to_continuation(Scheme_Object *obj, int num_rands, Scheme_Object **rands, 
                                            Scheme_Object **old_runstack, int can_ec);
+void scheme_escape_to_continuation(Scheme_Object *obj, int num_rands, Scheme_Object **rands, Scheme_Object *alt_full);
 
 Scheme_Object *scheme_chaperone_do_continuation_mark(const char *name, int is_get, Scheme_Object *key, Scheme_Object *val);
 
@@ -2153,6 +2154,11 @@ intptr_t scheme_get_semaphore_init(const char *who, int n, Scheme_Object **p);
 #endif
 
 void scheme_configure_floating_point(void);
+
+extern double scheme_double_too_positive_for_fixnum, scheme_double_too_negative_for_fixnum;
+#ifdef MZ_LONG_DOUBLE
+extern long_double scheme_extfl_too_positive_for_fixnum, scheme_extfl_too_negative_for_fixnum;
+#endif
 
 /****** Bignums *******/
 

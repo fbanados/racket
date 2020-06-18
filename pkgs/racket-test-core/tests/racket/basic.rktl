@@ -154,6 +154,31 @@
 (test #f list? (cons 'a 4))
 (arity-test list? 1 1)
 
+;; Try to check that `list?` is amortized constant-time
+(when (run-unreliable-tests? 'timing)
+  (define expected #f)
+  (define (check-time thunk)
+    (define start (current-process-milliseconds))
+    (thunk)
+    (define duration (- (current-process-milliseconds) start))
+    (cond
+      [(not expected) (set! expected duration)]
+      [else
+       (test #t < duration (+ (* 2 expected) 10))]))
+  (define (try range)
+    (for ([n range])
+      (define l (for/list ([i (in-range n)]) i))
+      (define nl (append l 'no))
+
+      (check-time (lambda ()
+                    (test #t 'list
+                          (for/and ([i 10000]) (list? l)))))
+      (check-time (lambda ()
+                    (test #f 'non-list
+                          (for/or ([i 10000]) (list? nl)))))))
+  (try (in-range  1000  1010))
+  (try (in-range 10000 10010)))
+
 (test #t pair? '(a . b))
 (test #t pair? '(a . 1))
 (test #t pair? '(a b c))
@@ -394,6 +419,16 @@
 (test #t eq? (hasheq) (hash-remove (hasheq 3 4) 3))
 (test #t eq? (hasheqv) (hash-remove (hasheqv 3 4) 3))
 
+(err/rt-test (hash 1))
+(err/rt-test (hasheqv 1))
+(err/rt-test (hasheq 1))
+(err/rt-test (make-hash 1))
+(err/rt-test (make-hasheqv 1))
+(err/rt-test (make-hasheq 1))
+(err/rt-test (make-weak-hash 1))
+(err/rt-test (make-weak-hasheqv 1))
+(err/rt-test (make-weak-hasheq 1))
+
 (test #t symbol? 'foo)
 (test #t symbol? (car '(a b)))
 (test #f symbol? "bar")
@@ -434,6 +469,8 @@
 (test "cb" 'string-set! x)
 (test "ab" symbol->string y)
 (test y string->symbol "ab")
+(err/rt-test (string->symbol 10))
+(err/rt-test (string->symbol 'oops))
 
 (test #f eq? (symbol->string 'apple) (symbol->string 'apple))
 (test "apple" symbol->immutable-string 'apple)
